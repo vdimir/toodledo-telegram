@@ -1,0 +1,6 @@
+.idea
+env/
+db.json
+__pycache__
+*.pyc
+setup_tokens.sh
