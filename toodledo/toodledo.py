@@ -1,9 +1,15 @@
 from requests_oauthlib import OAuth2Session
-from oauthlib.oauth2.rfc6749.parameters import MissingTokenError
+from oauthlib.oauth2.rfc6749.parameters import MissingTokenError, MissingCodeError
+
+from .datatypes import data_processor
 
 
 def init_toodledo_client_app(client_id, client_secret):
     ToodledoSession.client = {"client_id": client_id, "client_secret": client_secret}
+
+
+class NotAuthorizingError(Exception):
+    pass
 
 
 class ToodledoSession:
@@ -27,18 +33,27 @@ class ToodledoSession:
 
     def authorize(self, redirect_resp):
         redirect_resp = redirect_resp.replace("http://", "https://")
-        token = self._oauth.fetch_token(self.token_url,
-                                        client_secret=self.client['client_secret'],
-                                        authorization_response=redirect_resp)
-        self.token_saver(token)
+        try:
+            token = self._oauth.fetch_token(self.token_url,
+                                            client_secret=self.client['client_secret'],
+                                            authorization_response=redirect_resp)
+            self.token_saver(token)
+        except MissingCodeError:
+            return False
+        return True
 
-    @property
-    def oauth(self):
-        return self._oauth
+    def request(self, method, url, **kwargs):
+        try:
+            resp = self._oauth.request(method, url, **kwargs)
+        except MissingTokenError:
+            raise NotAuthorizingError
 
+        result = resp.json()
+        if 'errorCode' in result and result['errorCode'] == 2:
+            raise NotAuthorizingError
 
-class NotAuthorizingError(Exception):
-    pass
+        resp.raise_for_status()
+        return result
 
 
 class ApiUrl:
@@ -52,31 +67,30 @@ class ApiUrl:
 
     def build(self, item):
         url = self.api_url.format(self.path, item)
-        return url, self.method[item]
+        return self.method[item], url
 
 
 class ToodledoRequest:
-    def __init__(self, toodledo_session: ToodledoSession, path: str):
-        self.session = toodledo_session
-        self.url_builder = ApiUrl(path)
+    def __init__(self, session: ToodledoSession, path: str, action: str, proc=None):
+        self.url = ApiUrl(path).build(action)
+        self.session = session
+        self.proc = proc
 
-    def _request(self, method, url, params=None):
-        try:
-            resp = self.session.oauth.request(method, url, params=params)
-        except MissingTokenError:
-            raise NotAuthorizingError
+    def __call__(self, *args, **kwargs):
+        params = kwargs.get('params')
+        res = self.session.request(*self.url, params=params)
+        return self.proc(res)
 
-        result = resp.json()
-        if 'errorCode' in result and result['errorCode'] == 2:
-            raise NotAuthorizingError
 
-        resp.raise_for_status()
-        return result
+class ToodledoApi:
+    __attrs__ = ['get', 'add']
 
-    def get(self, params=None):
-        url, m = self.url_builder.build('get')
-        return self._request(m, url, params)
+    def __init__(self, session: ToodledoSession, path: str):
+        self.session = session
+        self.path = path
 
-    def add(self, params=None):
-        url, m = self.url_builder.build('add')
-        return self._request(m, url, params)
+    def __getattr__(self, item) -> ToodledoRequest:
+        if item not in self.__attrs__:
+            raise Exception("Unknown action call!")
+        proc = data_processor(self.path, item)
+        return ToodledoRequest(self.session, self.path, item, proc)
