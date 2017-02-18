@@ -49,7 +49,7 @@ class ToodledoSession:
             raise NotAuthorizingError
 
         result = resp.json()
-        if 'errorCode' in result and result['errorCode'] == 2:
+        if 'errorCode' in result and result['errorCode'] in [1,2]:
             raise NotAuthorizingError
 
         resp.raise_for_status()
@@ -77,8 +77,7 @@ class ToodledoRequest:
         self.proc = proc
 
     def __call__(self, *args, **kwargs):
-        params = kwargs.get('params')
-        res = self.session.request(*self.url, params=params)
+        res = self.session.request(*self.url, **kwargs)
         return self.proc(res)
 
 

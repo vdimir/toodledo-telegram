@@ -14,7 +14,9 @@ class UserDbEntry:
         logger.info('Init user %d' % self.user_id)
 
     def get_token(self):
-        return db.get(where('user_id') == self.user_id)['token']
+        r = db.get(where('user_id') == self.user_id)
+        if r is not None:
+            return r['token']
 
     def upd_token(self, token):
         r = db.update({'token': token}, where('user_id') == self.user_id)
