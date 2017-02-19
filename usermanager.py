@@ -1,6 +1,5 @@
 from database import UserDbEntry
-from toodledo import ToodledoSession, ToodledoApi, NotAuthorizingError
-from functools import lru_cache
+from toodledo import ToodledoSession, ToodledoApi
 
 
 class ToodledoUser:
@@ -12,8 +11,3 @@ class ToodledoUser:
 
     def authorize(self, redirect_url):
         self.session.authorize(redirect_url)
-
-
-@lru_cache(maxsize=500)
-def User(user_id) -> ToodledoUser:
-    return ToodledoUser(user_id)

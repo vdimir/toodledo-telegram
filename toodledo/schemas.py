@@ -3,7 +3,7 @@ from marshmallow.validate import Length
 
 from datetime import date, datetime
 
-from .datatypes import Task, TaskList
+from .datatypes import Task
 
 
 class ToodledoDate(fields.Field):
@@ -57,7 +57,7 @@ class TaskSchema(Schema):
 
 
 def task_get_processor(data):
-    return TaskList(TaskSchema(many=True).load(data[1:]).data)
+    return TaskSchema(many=True).load(data[1:]).data
 
 
 def result_processor(path, action):

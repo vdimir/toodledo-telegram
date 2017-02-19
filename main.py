@@ -1,57 +1,9 @@
-from telegram.ext import CommandHandler, Updater, MessageHandler, Filters
-import telegram
-
-from toodledo import init_toodledo_client_app, NotAuthorizingError
-
-from usermanager import User
-
-import logging
-
 import os
-
-TELEGRAM_TOKEN = os.environ['TELEGRAM_TOKEN']
-init_toodledo_client_app(os.environ['TOODLEDO_CLIENT_ID'],
-                         os.environ['TOODLEDO_CLIENT_SECRET'])
-
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+import locale
 
 
-def auth(bot, update, args):
-    url = args[0]
-    uid = update.message.from_user.id
-    r = User(uid).session.authorize(url)
-    if r:
-        bot.sendMessage(chat_id=update.message.chat_id, text="Authoring success!")
-    else:
-        bot.sendMessage(chat_id=update.message.chat_id, text="Wrong auth data!")
+def main():
+    locale.setlocale(locale.LC_TIME, "ru_RU")
 
-
-def get_tasks(bot, update):
-    uid = update.message.from_user.id
-    try:
-        t = User(uid).tasks.get(params={'fields':'duedate'})
-    except NotAuthorizingError:
-        bot.sendMessage(chat_id=update.message.chat_id, text="Not authorized\n" +
-                                                             User(uid).session.auth_url,
-                        disable_web_page_preview=True)
-        return
-    bot.sendMessage(chat_id=update.message.chat_id, text=str(t),
-                    parse_mode=telegram.ParseMode.HTML)
-
-
-def start(bot, update):
-    uid = update.message.from_user.id
-    bot.sendMessage(chat_id=update.message.chat_id, text="Authorize:\n" +
-                                                         User(uid).session.auth_url,
-                    disable_web_page_preview=True)
-
-
-updater = Updater(token=TELEGRAM_TOKEN)
-updater.dispatcher.add_handler(CommandHandler('auth', auth, pass_args=True))
-updater.dispatcher.add_handler(CommandHandler('start', start))
-updater.dispatcher.add_handler(CommandHandler('list', get_tasks))
-
-updater.start_polling()
+if __name__ == '__main__':
+    main()
