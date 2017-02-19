@@ -1,7 +1,9 @@
 from telegram.ext import CommandHandler, Updater, MessageHandler, Filters
 import telegram
 
-from toodledo import init_toodledo_client_app, NotAuthorizingError, User
+from toodledo import init_toodledo_client_app, NotAuthorizingError
+
+from usermanager import User
 
 import logging
 

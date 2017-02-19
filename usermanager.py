@@ -1,5 +1,5 @@
 from database import UserDbEntry
-from .toodledo import ToodledoSession, ToodledoApi
+from toodledo import ToodledoSession, ToodledoApi, NotAuthorizingError
 from functools import lru_cache
 
 
