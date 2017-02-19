@@ -1,5 +1,5 @@
 from telegram.ext import CommandHandler, Updater, MessageHandler, Filters
-from telegram import MessageEntity
+import telegram
 
 from toodledo import init_toodledo_client_app, NotAuthorizingError, User
 
@@ -30,14 +30,14 @@ def auth(bot, update, args):
 def get_tasks(bot, update):
     uid = update.message.from_user.id
     try:
-        t = User(uid).tasks.get()
+        t = User(uid).tasks.get(params={'fields':'duedate'})
     except NotAuthorizingError:
         bot.sendMessage(chat_id=update.message.chat_id, text="Not authorized\n" +
                                                              User(uid).session.auth_url,
                         disable_web_page_preview=True)
         return
-    d = str.join('\n', map(lambda t: t.title, t))
-    bot.sendMessage(chat_id=update.message.chat_id, text=d)
+    bot.sendMessage(chat_id=update.message.chat_id, text=str(t),
+                    parse_mode=telegram.ParseMode.HTML)
 
 
 def start(bot, update):

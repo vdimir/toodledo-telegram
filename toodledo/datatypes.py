@@ -1,62 +1,37 @@
-from marshmallow import Schema, fields, post_load
-from marshmallow.validate import Length
-
-from datetime import date, datetime
-
-
-class ToodledoDate(fields.Field):
-    def _serialize(self, value, attr, obj):
-        if value is None:
-            return 0
-        return datetime(year=value.year, month=value.month, day=value.day).timestamp()
-
-    def _deserialize(self, value, attr, obj):
-        if value == 0:
-            return None
-        return date.fromtimestamp(float(value))
-
-
-class ToodledoDatetime(fields.Field):
-    def _serialize(self, value, attr, obj):
-        if value is None:
-            return 0
-        return value.timestamp()
-
-    def _deserialize(self, value, attr, obj):
-        if value == 0:
-            return None
-        return datetime.fromtimestamp(float(value))
-
 
 class Task:
-    def __init__(self, **data):
-        for name, item in data.items():
-            setattr(self, name, item)
+    def __init__(self, title, tags=None, completed_date=None, duedate=None, **kwargs):
+        self.title = title
+        self.completed_date = completed_date
+        self.duedate = duedate
+        self.tags = [] if tags is None else tags
 
     def __repr__(self):
         attributes = sorted(["{}={}".format(name, item) for name, item in self.__dict__.items()])
         return "<Task {}>".format(", ".join(attributes))
 
+    @property
     def completed(self):
         return self.completed_date is not None
 
-
-class TaskSchema(Schema):
-    id_ = fields.Integer(dump_to="id", load_from="id")
-    title = fields.String(validate=Length(max=255))
-    completed_date = ToodledoDate(dump_to="completed", load_from="completed")
-
-    @post_load
-    def build(self, data):
-        return Task(**data)
+    def __str__(self):
+        x = '[x]' if self.completed else '[ ]'
+        due = '' if self.duedate is None else self.duedate.strftime("<i>%d %b, %A</i>")
+        return str.format("{x} {title} {due}", x=x, title=self.title, due=due)
 
 
-def create_task_list(data) -> [Task]:
-    schema = TaskSchema()
-    return [schema.load(x).data for x in data[1:]]
+class TaskList:
+    def __init__(self, tasks):
+        self.tasks = tasks
+        self.need_completed = False
 
+    def _predicate(self, t):
+        vals = [not t.completed or self.need_completed]
+        return all(vals)
 
-def data_processor(path, action):
-    task_processors = {'get': create_task_list}
-    processors = {'tasks': task_processors}
-    return processors.get(path, {}).get(action)
+    def get(self):
+        return filter(self._predicate, self.tasks)
+
+    def __str__(self):
+        return str.join("\n", map(str, self.get()))
+
