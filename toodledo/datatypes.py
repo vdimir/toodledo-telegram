@@ -1,6 +1,8 @@
 
 class Task:
-    def __init__(self, title, tags=None, completed_date=None, duedate=None, **kwargs):
+    def __init__(self, title=None, id_=None, modified=0, tags=None, completed_date=None, duedate=None, **kwargs):
+        self.modified = modified
+        self.id_ = id_
         self.title = title
         self.completed_date = completed_date
         self.duedate = duedate

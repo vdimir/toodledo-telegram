@@ -44,12 +44,13 @@ class ToodledoTags(fields.Field):
 
 class TaskSchema(Schema):
     id_ = fields.Integer(dump_to="id", load_from="id")
-    title = fields.String(required=True, validate=Length(max=255))
+    title = fields.String(validate=Length(max=255))
     completed_date = ToodledoDate(dump_to="completed", load_from="completed")
     duedate = ToodledoDate(dump_to="duedate", load_from="duedate")
     tags = ToodledoTags(dump_to="tag", load_from="tag", missing='[]')
     context = fields.Integer()
     ref = fields.Integer()
+    modified = fields.Integer()
 
     @post_load
     def build(self, data):
@@ -73,7 +74,9 @@ def task_add_processor(data):
         "tasks": TaskSchema(many=True).dumps(data).data
     }
 
+
 def params_processor(path, action):
-    task_processors = {'add': task_add_processor}
+    task_processors = {'add': task_add_processor,
+                       'edit': task_add_processor}
     processors = {'tasks': task_processors}
     return processors.get(path, {}).get(action)
