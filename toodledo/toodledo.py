@@ -75,11 +75,11 @@ class ToodledoRequest:
     def __init__(self, session: ToodledoSession, path: str, action: str, postproc=None, preproc=None):
         self.url = ApiUrl(path).build(action)
         self.session = session
-        self.postproc = postproc if postproc is not None else (lambda x: x)
-        self.preproc = preproc if preproc is not None else (lambda x: x)
+        self.postproc = postproc or (lambda x: x)
+        self.preproc = preproc or (lambda x: x)
 
     def __call__(self, params=None, **kwargs):
-        p = None if params is None else self.preproc(params)
+        p = params and self.preproc(params)
         res = self.session.request(*self.url, params=p, **kwargs)
         return self.postproc(res)
 

@@ -64,6 +64,7 @@ def add_task_handler(bot, update, uid=None):
     task = parse_task(msg)
     if task is None:
         bot.sendMessage(chat_id=uid, text="Cannot parse :(")
+        return
     res = with_user(uid).add_task(task)
     res = task.duedate
     bot.sendMessage(chat_id=uid, text=res)

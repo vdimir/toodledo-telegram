@@ -10,7 +10,7 @@ class Task:
         self.title = title
         self.completed_date = completed_date
         self.duedate = duedate
-        self.tags = [] if tags is None else tags
+        self.tags = tags or []
 
     def __repr__(self):
         attributes = sorted(["{}={}".format(name, item) for name, item in self.__dict__.items()])
