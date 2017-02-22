@@ -1,5 +1,5 @@
 from usermanager import ToodledoUser
-from toodledo import NotAuthorizingError, init_toodledo_client_app
+from toodledo import init_toodledo_client_app
 from toodledo.datatypes import Task
 
 from functools import lru_cache
@@ -15,23 +15,17 @@ def task_str(task: Task):
     return str.format("{x} {title} {due}", x=x, title=task.title, due=due)
 
 
-def not_authorized_handle(func):
-    def wrap(self, *args, **kwargs):
-        try:
-            return func(self, *args, **kwargs)
-        except NotAuthorizingError:
-            return "Not authorized\n" + self.user.session.auth_url
-    return wrap
-
-
 class ToodledoClient:
     def __init__(self, uid):
         self.user = ToodledoUser(uid)
 
+    @property
+    def auth_url(self):
+        return self.user.session.auth_url
+
     def auth(self, url) -> bool:
         return self.user.session.authorize(url)
 
-    @not_authorized_handle
     def get_tasks(self, only_id=None) -> [Task]:
         params = {'fields': 'duedate,star,tag', 'comp': 0}
         if only_id is not None:
@@ -39,7 +33,6 @@ class ToodledoClient:
         tasks = self.user.tasks.get(params)
         return tasks
 
-    @not_authorized_handle
     def make_complete(self, tid):
         task = Task(id_=tid, completed_date=datetime.date.today())
         res = self.user.tasks.edit(task)
@@ -47,7 +40,6 @@ class ToodledoClient:
             return False
         return str(res[0].get('id')) == str(tid)
 
-    @not_authorized_handle
     def add_task(self, task):
         res = self.user.tasks.add(task)
         return res

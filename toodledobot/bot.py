@@ -1,4 +1,4 @@
-from telegram.ext import CommandHandler, Updater, CallbackQueryHandler, RegexHandler
+from telegram.ext import CommandHandler, Updater, CallbackQueryHandler
 
 from .handlers import *
 
@@ -22,3 +22,4 @@ class ToodledoBot:
         dispatcher.add_handler(CommandHandler('add', add_task_handler))
         dispatcher.add_handler(CallbackQueryHandler(task_menu_handler, pattern='taskmenu\d+'))
         dispatcher.add_handler(CallbackQueryHandler(task_comp_handler, pattern='comptask\d+'))
+        dispatcher.add_error_handler(error_handler)
