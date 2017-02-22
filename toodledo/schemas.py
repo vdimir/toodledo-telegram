@@ -47,36 +47,38 @@ class TaskSchema(Schema):
     title = fields.String(validate=Length(max=255))
     completed_date = ToodledoDate(dump_to="completed", load_from="completed")
     duedate = ToodledoDate(dump_to="duedate", load_from="duedate")
-    tags = ToodledoTags(dump_to="tag", load_from="tag", missing='[]')
+    tags = ToodledoTags(dump_to="tag", load_from="tag")
     context = fields.Integer()
     ref = fields.Integer()
-    modified = fields.Integer()
+    modified = fields.Integer(load_only=True)
+    star = fields.Boolean()
 
     @post_load
     def build(self, data):
         return Task(**data)
 
 
-def task_get_processor(data):
+def task_get_post(data):
     return TaskSchema(many=True).load(data[1:]).data
 
 
 def result_processor(path, action):
-    task_processors = {'get': task_get_processor}
+    task_processors = {'get': task_get_post}
     processors = {'tasks': task_processors}
     return processors.get(path, {}).get(action)
 
 
-def task_add_processor(data):
+def task_add_pre(data):
     if not isinstance(data, list):
         data = [data]
     return {
-        "tasks": TaskSchema(many=True).dumps(data).data
+        "tasks": TaskSchema(many=True).dumps(data).data,
+        "fields": 'duedate,star,tag'
     }
 
 
 def params_processor(path, action):
-    task_processors = {'add': task_add_processor,
-                       'edit': task_add_processor}
+    task_processors = {'add': task_add_pre,
+                       'edit': task_add_pre}
     processors = {'tasks': task_processors}
     return processors.get(path, {}).get(action)

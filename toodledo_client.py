@@ -33,7 +33,7 @@ class ToodledoClient:
 
     @not_authorized_handle
     def get_tasks(self, only_id=None) -> [Task]:
-        params = {'fields': 'duedate', 'comp': 0}
+        params = {'fields': 'duedate,star,tag', 'comp': 0}
         if only_id is not None:
             params['id'] = only_id
         tasks = self.user.tasks.get(params)
@@ -45,6 +45,10 @@ class ToodledoClient:
         if len(res) != 1:
             return False
         return str(res[0].get('id')) == str(tid)
+
+    def add_task(self, task):
+        res = self.user.tasks.add(task)
+        return res
 
 
 @lru_cache(maxsize=500)

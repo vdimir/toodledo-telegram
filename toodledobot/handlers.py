@@ -1,4 +1,5 @@
 import telegram
+from .helpers import parse_task
 
 from toodledo_client import with_user, task_str
 from utils import unlines
@@ -58,5 +59,13 @@ def task_comp_handler(bot: telegram.Bot, update):
 
 
 @add_user_id
-def add_task_handler(bot, update, args, uid=None):
-    pass
+def add_task_handler(bot, update, uid=None):
+    msg = update.message.text
+    task = parse_task(msg)
+    if task is None:
+        bot.sendMessage(chat_id=uid, text="Cannot parse :(")
+    res = with_user(uid).add_task(task)
+    res = task.duedate
+    bot.sendMessage(chat_id=uid, text=res)
+
+

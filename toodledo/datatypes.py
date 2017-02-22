@@ -1,6 +1,10 @@
-
 class Task:
-    def __init__(self, title=None, id_=None, modified=0, tags=None, completed_date=None, duedate=None, **kwargs):
+    def __init__(self, title=None,
+                 id_=None, modified=0,
+                 tags=None, completed_date=None,
+                 duedate=None, star=False,
+                 **kwargs):
+        self.star = star
         self.modified = modified
         self.id_ = id_
         self.title = title
