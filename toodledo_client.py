@@ -39,6 +39,7 @@ class ToodledoClient:
         tasks = self.user.tasks.get(params)
         return tasks
 
+    @not_authorized_handle
     def make_complete(self, tid):
         task = Task(id_=tid, completed_date=datetime.date.today())
         res = self.user.tasks.edit(task)
@@ -46,6 +47,7 @@ class ToodledoClient:
             return False
         return str(res[0].get('id')) == str(tid)
 
+    @not_authorized_handle
     def add_task(self, task):
         res = self.user.tasks.add(task)
         return res

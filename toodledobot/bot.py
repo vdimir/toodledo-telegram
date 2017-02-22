@@ -16,6 +16,7 @@ class ToodledoBot:
 
     def setup_handlers(self):
         dispatcher = self.updater.dispatcher
+        dispatcher.add_handler(CommandHandler('start', start_handler))
         dispatcher.add_handler(CommandHandler('auth', auth_handler, pass_args=True))
         dispatcher.add_handler(CommandHandler('list', get_tasks_handler))
         dispatcher.add_handler(CommandHandler('add', add_task_handler))

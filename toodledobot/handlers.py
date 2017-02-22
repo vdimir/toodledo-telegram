@@ -13,6 +13,10 @@ def add_user_id(func):
     return wrapped
 
 
+def start_handler(bot, update):
+    bot.sendMessage(chat_id=update.message.chat_id, text="Hello!")
+
+
 @add_user_id
 def auth_handler(bot, update, args, uid=None):
     res = with_user(uid).auth(args[0])
@@ -23,6 +27,9 @@ def auth_handler(bot, update, args, uid=None):
 @add_user_id
 def get_tasks_handler(bot, update, uid=None):
     tasks = with_user(uid).get_tasks()
+    if isinstance(tasks, str):
+        bot.sendMessage(chat_id=update.message.chat_id, text=tasks)
+        return
     keys = list(map(
         lambda t: telegram.InlineKeyboardButton(t.title, callback_data="taskmenu{}".format(t.id_)),
         tasks))
