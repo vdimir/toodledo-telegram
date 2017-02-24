@@ -9,12 +9,6 @@ init_toodledo_client_app(os.environ['TOODLEDO_CLIENT_ID'],
                          os.environ['TOODLEDO_CLIENT_SECRET'])
 
 
-def task_str(task: Task):
-    x = '[x]' if task.completed else '[ ]'
-    due = '' if task.duedate is None else task.duedate.strftime("<i>%d %b, %A</i>")
-    return str.format("{x} {title} {due}", x=x, title=task.title, due=due)
-
-
 class ToodledoClient:
     def __init__(self, uid):
         self.user = ToodledoUser(uid)

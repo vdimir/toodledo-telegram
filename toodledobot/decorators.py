@@ -22,18 +22,14 @@ def add_user_id(func):
 
 
 def extract_user_id(update):
-    user_id = None
-    try:
-        user_id = update.message.from_user.id
-    except (NameError, AttributeError):
+    getters = (lambda u: u.message.from_user.id,
+               lambda u: u.inline_query.from_user.id,
+               lambda u: u.chosen_inline_result.from_user.id,
+               lambda u: u.callback_query.from_user.id)
+
+    for get_uid in getters:
         try:
-            user_id = update.inline_query.from_user.id
+            return get_uid(update)
         except (NameError, AttributeError):
-            try:
-                user_id = update.chosen_inline_result.from_user.id
-            except (NameError, AttributeError):
-                try:
-                    user_id = update.callback_query.from_user.id
-                except (NameError, AttributeError):
-                    pass
-    return user_id
+            continue
+    return None

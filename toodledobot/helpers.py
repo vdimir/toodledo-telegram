@@ -3,6 +3,7 @@ import re
 
 import dateparser
 
+
 def parse_task(text):
     title = re.search('/add ([^#@]+)', text)
     if title is not None:
@@ -13,9 +14,9 @@ def parse_task(text):
     tags = re.findall('#\w+', text)
     tags = list(map(lambda s: s[1:], tags))
 
-    # due = re.search('@[^#@]+', text)
-    # if due is not None:
-    #     due = due.group()[1:]
-    #     due = dateparser.parse(due, settings={'PREFER_DATES_FROM': 'future'})
-    task = Task(title=title, tags=tags)
+    due = re.search('@[^#@]+', text)
+    if due is not None:
+        due = due.group()[1:].strip()
+        due = dateparser.parse(due, settings={'PREFER_DATES_FROM': 'future'}, languages=['en', 'ru'])
+    task = Task(title=title, tags=tags, duedate=due)
     return task

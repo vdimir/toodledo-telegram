@@ -1,14 +1,15 @@
 import telegram
 from .helpers import parse_task
 
-from toodledo_client import with_user, task_str
-
-from utils import unlines
+from toodledo_client import with_user
+from .textformatter import HtmlTextFormater
 from .decorators import *
 
 import logging
 logger = logging.getLogger(__name__)
 
+
+fmt = HtmlTextFormater()
 
 @add_user_id
 def start_handler(bot, update, uid=None):
@@ -39,7 +40,7 @@ def get_tasks_handler(bot, update, uid=None):
         lambda t: telegram.InlineKeyboardButton(t.title, callback_data="taskmenu{}".format(t.id_)),
         tasks))
     markup = telegram.InlineKeyboardMarkup([keys])
-    res = unlines(tasks, task_str)
+    res = fmt.task_list_fmt(tasks)
     r = bot.sendMessage(chat_id=uid, text=res,
                         reply_markup=markup,
                         parse_mode=telegram.ParseMode.HTML)
@@ -48,28 +49,26 @@ def get_tasks_handler(bot, update, uid=None):
 @not_authorized_wrapper
 @add_user_id
 def task_menu_handler(bot: telegram.Bot, update, uid=None):
-    cq = update.callback_query
-    tid = cq.data[8:]
+    tid = update.callback_query.data[8:]
     tasks = with_user(uid).get_tasks(only_id=tid)
     if len(tasks) != 1:
-        bot.answer_callback_query(cq.id, "Error!")
+        bot.answer_callback_query(update.callback_query.id, "Error!")
         return
     task = tasks[0]
     text = task_str(task)
     keys = [telegram.InlineKeyboardButton("complete", callback_data="comptask{}".format(tid))]
     markup = telegram.InlineKeyboardMarkup([keys])
     bot.sendMessage(chat_id=uid, text=text, reply_markup=markup)
-    bot.answer_callback_query(cq.id)
+    bot.answer_callback_query(update.callback_query.id)
 
 
 @not_authorized_wrapper
 @add_user_id
 def task_comp_handler(bot: telegram.Bot, update, uid=None):
-    cq = update.callback_query
-    tid = cq.data[8:]
+    tid = update.callback_query.data[8:]
     res = with_user(uid).make_complete(tid)
     txt = "Ok" if res else "Error!"
-    bot.answer_callback_query(cq.id, txt)
+    bot.answer_callback_query(update.callback_query.id, txt)
 
 
 @not_authorized_wrapper
@@ -81,7 +80,6 @@ def add_task_handler(bot, update, uid=None):
         bot.sendMessage(chat_id=uid, text="Cannot parse :(")
         return
     res = with_user(uid).add_task(task)
-    res = task.duedate
     bot.sendMessage(chat_id=uid, text=res)
 
 

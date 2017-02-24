@@ -10,7 +10,7 @@ class ToodledoDate(fields.Field):
     def _serialize(self, value, attr, obj):
         if value is None:
             return 0
-        return datetime(year=value.year, month=value.month, day=value.day).timestamp()
+        return datetime(year=value.year, month=value.month, day=value.day, hour=12).timestamp()
 
     def _deserialize(self, value, attr, obj):
         if value == 0:
