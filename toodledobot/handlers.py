@@ -1,7 +1,7 @@
 import telegram
 from .helpers import parse_task
 
-from toodledo_client import with_user
+from toodledoclient import with_user
 from .textformatter import HtmlTextFormater
 from .decorators import *
 import re
@@ -42,7 +42,7 @@ def get_tasks_handler(bot, update, uid=None):
     if len(tasks) == 0:
         bot.sendMessage(chat_id=uid, text="No such tasks",
                         parse_mode=telegram.ParseMode.HTML)
-
+        return
     keys = list(map(
         lambda t: telegram.InlineKeyboardButton(t.title, callback_data="taskmenu{}".format(t.id_)),
         tasks))
@@ -61,8 +61,7 @@ def task_menu_handler(bot: telegram.Bot, update, uid=None):
     if len(tasks) != 1:
         bot.answer_callback_query(update.callback_query.id, "Error!")
         return
-    task = tasks[0]
-    text = fmt.task_fmt(tasks)
+    text = fmt.task_fmt(tasks[0])
     keys = [telegram.InlineKeyboardButton("complete", callback_data="comptask{}".format(tid))]
     markup = telegram.InlineKeyboardMarkup([keys])
     bot.sendMessage(chat_id=uid, text=text, reply_markup=markup)

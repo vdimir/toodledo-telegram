@@ -1,5 +1,5 @@
 from database import UserDbEntry
-from toodledo import ToodledoSession, ToodledoApi
+from toodledocore import ToodledoSession, ToodledoApi
 
 
 class ToodledoUser:

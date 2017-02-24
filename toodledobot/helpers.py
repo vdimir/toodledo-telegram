@@ -1,4 +1,4 @@
-from toodledo.datatypes import Task
+from toodledoclient.datatypes import Task
 import re
 
 import dateparser

@@ -1,6 +1,7 @@
-from toodledo.datatypes import Task
+from toodledoclient.datatypes import Task
 
 from utils import unlines
+
 
 class HtmlTextFormater:
     def __init__(self):

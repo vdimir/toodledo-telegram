@@ -1,4 +1,4 @@
-from toodledo import NotAuthorizingError
+from toodledocore import NotAuthorizingError
 
 
 def not_authorized_wrapper(func):

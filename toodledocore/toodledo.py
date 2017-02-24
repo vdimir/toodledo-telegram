@@ -1,8 +1,6 @@
 from requests_oauthlib import OAuth2Session
 from oauthlib.oauth2.rfc6749.parameters import MissingTokenError, MissingCodeError
 
-from .schemas import result_processor, params_processor
-
 
 def init_toodledo_client_app(client_id, client_secret):
     ToodledoSession.client = {"client_id": client_id, "client_secret": client_secret}
@@ -72,16 +70,13 @@ class ApiUrl:
 
 
 class ToodledoRequest:
-    def __init__(self, session: ToodledoSession, path: str, action: str, postproc=None, preproc=None):
+    def __init__(self, session: ToodledoSession, path: str, action: str):
         self.url = ApiUrl(path).build(action)
         self.session = session
-        self.postproc = postproc or (lambda x: x)
-        self.preproc = preproc or (lambda x: x)
 
     def __call__(self, params=None, **kwargs):
-        p = params and self.preproc(params)
-        res = self.session.request(*self.url, params=p, **kwargs)
-        return self.postproc(res)
+        res = self.session.request(*self.url, params=params, **kwargs)
+        return res
 
 
 class ToodledoApi:
@@ -94,6 +89,4 @@ class ToodledoApi:
     def __getattr__(self, item) -> ToodledoRequest:
         if item not in self.__attrs__:
             raise Exception("Unknown action call!")
-        pre = params_processor(self.path, item)
-        post = result_processor(self.path, item)
-        return ToodledoRequest(self.session, self.path, item, preproc=pre, postproc=post)
+        return ToodledoRequest(self.session, self.path, item)
