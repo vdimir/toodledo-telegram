@@ -20,11 +20,13 @@ class ToodledoClient:
     def auth(self, url) -> bool:
         return self.user.session.authorize(url)
 
-    def get_tasks(self, only_id=None) -> [Task]:
+    def get_tasks(self, only_id=None, tag=None) -> [Task]:
         params = {'fields': 'duedate,star,tag', 'comp': 0}
         if only_id is not None:
             params['id'] = only_id
         tasks = self.user.tasks.get(params)
+        if tag is not None:
+            tasks = list(filter(lambda t: tag in t.tags, tasks))
         return tasks
 
     def make_complete(self, tid):

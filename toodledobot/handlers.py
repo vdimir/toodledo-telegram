@@ -4,7 +4,7 @@ from .helpers import parse_task
 from toodledo_client import with_user
 from .textformatter import HtmlTextFormater
 from .decorators import *
-
+import re
 import logging
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,14 @@ def auth_handler(bot, update, args, uid=None):
 @not_authorized_wrapper
 @add_user_id
 def get_tasks_handler(bot, update, uid=None):
-    tasks = with_user(uid).get_tasks()
+    msg = update.message.text
+    tag = re.match('#(\w+)', msg)
+    tag = tag and tag.group(1)
+    tasks = with_user(uid).get_tasks(tag=tag)
+    if len(tasks) == 0:
+        bot.sendMessage(chat_id=uid, text="No such tasks",
+                        parse_mode=telegram.ParseMode.HTML)
+
     keys = list(map(
         lambda t: telegram.InlineKeyboardButton(t.title, callback_data="taskmenu{}".format(t.id_)),
         tasks))
@@ -55,7 +62,7 @@ def task_menu_handler(bot: telegram.Bot, update, uid=None):
         bot.answer_callback_query(update.callback_query.id, "Error!")
         return
     task = tasks[0]
-    text = task_str(task)
+    text = fmt.task_fmt(tasks)
     keys = [telegram.InlineKeyboardButton("complete", callback_data="comptask{}".format(tid))]
     markup = telegram.InlineKeyboardMarkup([keys])
     bot.sendMessage(chat_id=uid, text=text, reply_markup=markup)
