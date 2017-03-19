@@ -3,14 +3,12 @@ from marshmallow.validate import Length
 
 from datetime import date, datetime
 
-from .datatypes import Task
-
 
 class ToodledoDate(fields.Field):
     def _serialize(self, value, attr, obj):
         if value is None:
             return 0
-        return datetime(year=value.year, month=value.month, day=value.day).timestamp()
+        return datetime(year=value.year, month=value.month, day=value.day, hour=12).timestamp()
 
     def _deserialize(self, value, attr, obj):
         if value == 0:
@@ -43,6 +41,8 @@ class ToodledoTags(fields.Field):
 
 
 class TaskSchema(Schema):
+    __model__ = None
+
     id_ = fields.Integer(dump_to="id", load_from="id")
     title = fields.String(validate=Length(max=255))
     completed_date = ToodledoDate(dump_to="completed", load_from="completed")
@@ -55,30 +55,6 @@ class TaskSchema(Schema):
 
     @post_load
     def build(self, data):
-        return Task(**data)
-
-
-def task_get_post(data):
-    return TaskSchema(many=True).load(data[1:]).data
-
-
-def result_processor(path, action):
-    task_processors = {'get': task_get_post}
-    processors = {'tasks': task_processors}
-    return processors.get(path, {}).get(action)
-
-
-def task_add_pre(data):
-    if not isinstance(data, list):
-        data = [data]
-    return {
-        "tasks": TaskSchema(many=True).dumps(data).data,
-        "fields": 'duedate,star,tag'
-    }
-
-
-def params_processor(path, action):
-    task_processors = {'add': task_add_pre,
-                       'edit': task_add_pre}
-    processors = {'tasks': task_processors}
-    return processors.get(path, {}).get(action)
+        if self.__model__ is None:
+            return data
+        return self.__model__(**data)

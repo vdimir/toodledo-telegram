@@ -2,9 +2,6 @@ from telegram.ext import CommandHandler, Updater, CallbackQueryHandler, RegexHan
 
 from .handlers import *
 
-# реплаи
-# инлайн клавиатура
-# кастомная клавиатура
 
 class ToodledoBot:
     def __init__(self, telegram_token):
@@ -19,6 +16,9 @@ class ToodledoBot:
         dispatcher.add_handler(CommandHandler('start', start_handler))
         dispatcher.add_handler(CommandHandler('auth', auth_handler, pass_args=True))
         dispatcher.add_handler(CommandHandler('list', get_tasks_handler))
+        dispatcher.add_handler(RegexHandler('#(\w+)', get_tasks_handler))
         dispatcher.add_handler(CommandHandler('add', add_task_handler))
+        dispatcher.add_handler(CommandHandler('cal', calendar_handler))
         dispatcher.add_handler(CallbackQueryHandler(task_menu_handler, pattern='taskmenu\d+'))
         dispatcher.add_handler(CallbackQueryHandler(task_comp_handler, pattern='comptask\d+'))
+        dispatcher.add_error_handler(error_handler)
