@@ -4,17 +4,31 @@ from .helpers import parse_task
 from toodledoclient import with_user
 from .textformatter import HtmlTextFormater
 from .decorators import *
+import calendar
 import re
+import datetime
+from utils import group_sq
 import logging
+
 logger = logging.getLogger(__name__)
 
-
 fmt = HtmlTextFormater()
+
 
 @add_user_id
 def start_handler(bot, update, uid=None):
     bot.sendMessage(chat_id=uid, text="Hello!\n"
                                       "Type /auth and follow instructions")
+
+
+@add_user_id
+def calendar_handler(bot, update, uid=None):
+    today = datetime.date.today()
+    (year, month, day) = today.year, today.month, today.day
+    txt = calendar.TextCalendar().formatmonth(year, month, w=3)
+    txt = txt.replace(' {} '.format(day), '[{}]'.format(day))
+    bot.sendMessage(chat_id=uid, text="<pre>{}</pre>".format(txt),
+                    parse_mode=telegram.ParseMode.HTML)
 
 
 @not_authorized_wrapper
@@ -44,9 +58,9 @@ def get_tasks_handler(bot, update, uid=None):
                         parse_mode=telegram.ParseMode.HTML)
         return
     keys = list(map(
-        lambda t: telegram.InlineKeyboardButton(t.title, callback_data="taskmenu{}".format(t.id_)),
-        tasks))
-    markup = telegram.InlineKeyboardMarkup([keys])
+        lambda p: telegram.InlineKeyboardButton(str(p[0]), callback_data="taskmenu{}".format(p[1].id_)),
+        enumerate(tasks, 1)))
+    markup = telegram.InlineKeyboardMarkup(group_sq(keys))
     res = fmt.task_list_fmt(tasks)
     r = bot.sendMessage(chat_id=uid, text=res,
                         reply_markup=markup,
