@@ -4,7 +4,7 @@ from toodledoclient import toodledo_client
 from .textformatter import HtmlTextFormater
 from .decorators import *
 from .actions import send_task_list, send_task
-from .msg_parser import parse_task
+from .msg_parser import parse_add_task, parse_edit_task
 
 import calendar
 import re
@@ -70,7 +70,7 @@ def get_tasks_by_tag_handler(bot, update, uid=None, groups=None):
 @add_user_id
 def add_task_handler(bot, update, uid=None):
     msg = update.message.text
-    task = parse_task(msg)
+    task = parse_add_task(msg)
     res = toodledo_client(uid).edit_add_task(task)
     send_task(bot, uid, res)
 
@@ -85,7 +85,15 @@ def task_edit_handler(bot: telegram.Bot, update, uid=None):
     if task is None:
         raise UserInputError("Not found")
 
-    edited_task = task.toggle_complete()
+    edit_task = parse_edit_task(msg_text)
+    if edit_task.get('comp'):
+        edited_task = task.toggle_complete()
+    elif edit_task.get('star'):
+        s = not task.is_star()
+        edited_task = task.using(star=s)
+    elif edit_task.get('duedate'):
+        edited_task = task.using(duedate=edit_task.get('duedate'))
+
     task = toodledo_client(uid).edit_add_task(edited_task)
     update.message.reply_to_message.edit_text(text=fmt.task_fmt(task),
                                               parse_mode=telegram.ParseMode.HTML)

@@ -38,3 +38,6 @@ class Task(persistent('id_')):
 
     def completed(self):
         return self.completed_date is not None
+
+    def is_star(self):
+        return self.star

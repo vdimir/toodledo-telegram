@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 task_schema = TaskSchema()
 task_schema.__model__ = Task
 
-params = make_dict(fields='duedate,star,tag,note')
+params = make_dict(fields='duedate,star,tag,priority,note')
 
 
 class TaskCache:
@@ -110,4 +110,5 @@ class ToodledoClient:
         else:
             [resp] = self.user.tasks.add(params.using(tasks=new_dump))
         resp_task = task_schema.load(resp).data
+        self.tasks.sync()
         return resp_task

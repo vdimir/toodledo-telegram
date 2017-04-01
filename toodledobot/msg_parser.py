@@ -3,7 +3,7 @@ from .errors import UserInputError
 
 import dateparser
 
-from pyparsing import Word, ZeroOrMore, Optional, Suppress, ParseException
+from pyparsing import Word, ZeroOrMore, Optional, Suppress, ParseException, Literal
 import pyparsing as prs
 
 rus_alphas = 'йцукенгшщзхъфывапролджэячсмитьбюЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ'
@@ -15,16 +15,18 @@ def parse_date(due):
     return dateparser.parse(due, settings={'PREFER_DATES_FROM': 'future'}, languages=['en', 'ru']) or due
 
 
-def parse_task(text):
+due_parser = (Suppress('@') + Word(alphanums + ' ')
+              .setParseAction(lambda t: ('duedate', parse_date(t.asList()[0])))).setName('@due')
+
+
+def parse_add_task(text):
     cmd = Suppress(Optional(prs.Word('/', prs.alphas)))
     title = (Word(alphanums + ' ,!')
              .setParseAction(lambda t: ('title', t.asList()[0].strip()))).setName('title')
     tags = (ZeroOrMore(Suppress('#') + Word(alphas))
             .setParseAction(lambda t: ('tags', t.asList())))
-    due = Optional(Suppress('@') + Word(alphanums + ' ')
-                   .setParseAction(lambda t: ('duedate', parse_date(t.asList()[0]))))
 
-    task_parser = cmd + title + tags + due
+    task_parser = cmd + title + tags + Optional(due_parser)
     try:
         raw_task = dict(task_parser.parseString(text).asList())
     except ParseException as e:
@@ -34,3 +36,14 @@ def parse_task(text):
         raise UserInputError("Invalid date: '{}'".format(raw_task.get('duedate')))
 
     return Task(**raw_task)
+
+
+def parse_edit_task(text):
+    comp = (Literal('/comp') | Literal('comp')).setParseAction(lambda t: ('comp', True)).setName('/comp')
+    star = (Literal('/star') | Literal('star')).setParseAction(lambda t: ('star', True)).setName('/star')
+    task_parser = comp | star | due_parser
+    try:
+        edit_task = dict(task_parser.parseString(text).asList())
+    except ParseException as e:
+        raise UserInputError(str(e))
+    return edit_task
