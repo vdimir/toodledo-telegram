@@ -5,7 +5,7 @@ cement==2.8.2
 certifi==2017.1.23
 colorama==0.3.7
 convertdate==2.1.0
-git+git://github.com/scrapinghub/dateparser@5b6bc54
+dateparser==0.6.0
 decorator==4.0.11
 docker-py==1.7.2
 dockerpty==0.4.1
@@ -29,6 +29,7 @@ ptyprocess==0.5.1
 Pygments==2.2.0
 pyparsing==2.1.10
 pyperclip==1.5.27
+pysistence==0.4.1
 python-dateutil==2.6.0
 python-telegram-bot==5.3.0
 pytz==2016.10
@@ -49,4 +50,3 @@ umalqurra==0.2
 urllib3==1.20
 wcwidth==0.1.7
 websocket-client==0.40.0
-wheel==0.24.0

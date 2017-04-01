@@ -9,5 +9,5 @@ init_toodledo_client_app(os.environ['TOODLEDO_CLIENT_ID'],
 
 
 @lru_cache(maxsize=500)
-def with_user(user_id) -> ToodledoClient:
+def toodledo_client(user_id) -> ToodledoClient:
     return ToodledoClient(user_id)
