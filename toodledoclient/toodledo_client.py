@@ -2,30 +2,76 @@ from .usermanager import ToodledoUser
 from .datatypes import Task
 from toodledocore.schemas import TaskSchema
 import datetime
+from pysistence import make_dict
 
-tasks_schema = TaskSchema(many=True)
-tasks_schema.__model__ = Task
+from utils import maybe_list, andf
+import time
 
-fields = 'duedate,star,tag'
+import logging
+logger = logging.getLogger(__name__)
+
+task_schema = TaskSchema()
+task_schema.__model__ = Task
+
+params = make_dict(fields='duedate,star,tag,note')
 
 
-def dumps_tasks(tasks):
-    if not isinstance(tasks, list):
-        tasks = [tasks]
-    return tasks_schema.dumps(tasks).data,
+class TaskCache:
+    def __init__(self, api):
+        self.api = api
+        self.lastedit = 0
+        self.lastdelete = 0
+        self.stored_tasks = {}
 
+    def update_task(self, new_task):
+        task_id = new_task.id_
+        if task_id not in self.stored_tasks:
+            self.stored_tasks[task_id] = new_task
+            return
+        if self.stored_tasks[task_id].modified < new_task.modified:
+            self.stored_tasks[task_id] = new_task
 
-def send_tasks_params(tasks):
-        params = {
-            "tasks": dumps_tasks(tasks),
-            "fields": fields
-        }
-        return params
+    def _fetch_edited(self):
+        logger.info("fetching updates")
+        p = params.using(after=self.lastedit)
+        [pageinfo, *tasks] = self.api.tasks.get(p)
+        assert pageinfo['num'] == pageinfo['total']
+        logger.info("{}/{} fetched".format(pageinfo['num'], pageinfo['total']))
+        for t in tasks:
+            self.update_task(task_schema.load(t).data)
+        self.lastedit = round(time.time())
+
+    def _clean_deleted(self):
+        logger.info("fetching deletes")
+        [_, *del_tasks] = self.api.tasks.deleted()
+        for t in del_tasks:
+            key = t['id']
+            if key in self.stored_tasks:
+                del self.stored_tasks[key]
+        self.lastdelete = round(time.time())
+
+    def sync(self):
+        acc = self.api.account.get()
+        if acc['lastedit_task'] > self.lastedit:
+            self._fetch_edited()
+
+        if acc['lastdelete_task'] > self.lastdelete:
+            self._clean_deleted()
+
+    def get_tasks(self, sync=True):
+        sync and self.sync()
+        return self.stored_tasks
+
+    def by_id(self, task_id, sync=True):
+        return self.get_tasks(sync).get(int(task_id))
 
 
 class ToodledoClient:
     def __init__(self, uid):
         self.user = ToodledoUser(uid)
+        self.tasks = TaskCache(self.user)
+        self.tasks.sync()
+        self.msg_task_map = {}
 
     @property
     def auth_url(self):
@@ -34,30 +80,34 @@ class ToodledoClient:
     def auth(self, url) -> bool:
         return self.user.session.authorize(url)
 
-    def get_tasks(self, only_id=None, tag=None) -> [Task]:
-        params = {'fields': fields, 'comp': 0}
-        if only_id is not None:
-            params['id'] = only_id
-        data = self.user.tasks.get(params)
-        tasks = tasks_schema.load(data[1:]).data
+    def assoc_task_msg(self, msg_id, task_id):
+        self.msg_task_map[msg_id] = task_id
+
+    def get_by_msg_id(self, msg_id):
+        tid = self.msg_task_map.get(msg_id)
+        return tid and self.get_task_by_id(tid)
+
+    def get_task_by_id(self, task_id):
+        return self.tasks.by_id(task_id, False)
+
+    def get_tasks(self, task_id=None, tag=None, comp=False) -> [Task]:
+        if task_id is not None:
+            return maybe_list(self.get_task_by_id(task_id))
+
+        filters = []
         if tag is not None:
-            tasks = list(filter(lambda t: tag in t.tags, tasks))
-        return tasks
+            filters.append(lambda t: tag in t.tags)
+        if comp is not None:
+            filters.append(lambda t: t.completed() == comp)
 
-    def make_complete(self, tid):
-        task = {'id_': tid, 'completed_date': datetime.date.today()}
-        res = self.user.tasks.edit(send_tasks_params(task))
-        if len(res) != 1:
-            return False
-        return res[0].get('id') == int(tid)
+        tasks = self.tasks.get_tasks().values()
+        return list(filter(andf(*filters), tasks))
 
-    def delete_task(self, tid):
-        params = {'tasks': [tid]}
-        res = self.user.tasks.edit(params)
-        if len(res) != 1:
-            return False
-        return res[0].get('id') == int(tid)
-
-    def add_task(self, task):
-        res = self.user.tasks.add(send_tasks_params(task))
-        return res
+    def edit_add_task(self, new_task):
+        new_dump = [task_schema.dumps(new_task).data]
+        if hasattr(new_task, 'id_'):
+            [resp] = self.user.tasks.edit(params.using(tasks=new_dump))
+        else:
+            [resp] = self.user.tasks.add(params.using(tasks=new_dump))
+        resp_task = task_schema.load(resp).data
+        return resp_task

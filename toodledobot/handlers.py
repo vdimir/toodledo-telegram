@@ -1,13 +1,14 @@
 import telegram
-from .helpers import parse_task
 
-from toodledoclient import with_user
+from toodledoclient import toodledo_client
 from .textformatter import HtmlTextFormater
 from .decorators import *
+from .actions import send_task_list, send_task
+from .msg_parser import parse_task
+
 import calendar
 import re
 import datetime
-from utils import group_sq
 import logging
 
 logger = logging.getLogger(__name__)
@@ -38,10 +39,10 @@ def auth_handler(bot, update, args, uid=None):
         text = "Please, send redirect url in command /auth <url>\n" \
                "Authorization url: {}\n"
         bot.sendMessage(chat_id=uid,
-                        text=text.format(with_user(uid).auth_url),
+                        text=text.format(toodledo_client(uid).auth_url),
                         disable_web_page_preview=True)
         return
-    res = with_user(uid).auth(args[0])
+    res = toodledo_client(uid).auth(args[0])
     text = "Authorizing success!" if res else "Wrong authorizing data!"
     bot.sendMessage(chat_id=uid, text=text)
 
@@ -49,58 +50,46 @@ def auth_handler(bot, update, args, uid=None):
 @not_authorized_wrapper
 @add_user_id
 def get_tasks_handler(bot, update, uid=None):
-    msg = update.message.text
-    tag = re.match('#(\w+)', msg)
-    tag = tag and tag.group(1)
-    tasks = with_user(uid).get_tasks(tag=tag)
+    tasks = toodledo_client(uid).get_tasks()
+    send_task_list(bot, uid, tasks)
+
+
+@not_authorized_wrapper
+@add_user_id
+def get_tasks_by_tag_handler(bot, update, uid=None, groups=None):
+    tasks = toodledo_client(uid).get_tasks(tag=groups[0])
     if len(tasks) == 0:
-        bot.sendMessage(chat_id=uid, text="No such tasks",
+        bot.sendMessage(chat_id=uid, text="<i>No such tasks</i>",
                         parse_mode=telegram.ParseMode.HTML)
         return
-    keys = list(map(
-        lambda p: telegram.InlineKeyboardButton(str(p[0]), callback_data="taskmenu{}".format(p[1].id_)),
-        enumerate(tasks, 1)))
-    markup = telegram.InlineKeyboardMarkup(group_sq(keys))
-    res = fmt.task_list_fmt(tasks)
-    r = bot.sendMessage(chat_id=uid, text=res,
-                        reply_markup=markup,
-                        parse_mode=telegram.ParseMode.HTML)
+    send_task_list(bot, uid, tasks)
 
 
-@not_authorized_wrapper
-@add_user_id
-def task_menu_handler(bot: telegram.Bot, update, uid=None):
-    tid = update.callback_query.data[8:]
-    tasks = with_user(uid).get_tasks(only_id=tid)
-    if len(tasks) != 1:
-        bot.answer_callback_query(update.callback_query.id, "Error!")
-        return
-    text = fmt.task_fmt(tasks[0])
-    keys = [telegram.InlineKeyboardButton("complete", callback_data="comptask{}".format(tid))]
-    markup = telegram.InlineKeyboardMarkup([keys])
-    bot.sendMessage(chat_id=uid, text=text, reply_markup=markup)
-    bot.answer_callback_query(update.callback_query.id)
-
-
-@not_authorized_wrapper
-@add_user_id
-def task_comp_handler(bot: telegram.Bot, update, uid=None):
-    tid = update.callback_query.data[8:]
-    res = with_user(uid).make_complete(tid)
-    txt = "Ok" if res else "Error!"
-    bot.answer_callback_query(update.callback_query.id, txt)
-
-
+@user_error_wrapper
 @not_authorized_wrapper
 @add_user_id
 def add_task_handler(bot, update, uid=None):
     msg = update.message.text
     task = parse_task(msg)
+    res = toodledo_client(uid).edit_add_task(task)
+    send_task(bot, uid, res)
+
+
+@user_error_wrapper
+@not_authorized_wrapper
+@add_user_id
+def task_edit_handler(bot: telegram.Bot, update, uid=None):
+    msg_text = update.message.text
+    mid = update.message.reply_to_message.message_id
+    task = toodledo_client(uid).get_by_msg_id(mid)
     if task is None:
-        bot.sendMessage(chat_id=uid, text="Cannot parse :(")
-        return
-    res = with_user(uid).add_task(task)
-    bot.sendMessage(chat_id=uid, text=res)
+        raise UserInputError("Not found")
+
+    edited_task = task.toggle_complete()
+    task = toodledo_client(uid).edit_add_task(edited_task)
+    update.message.reply_to_message.edit_text(text=fmt.task_fmt(task),
+                                              parse_mode=telegram.ParseMode.HTML)
+    update.message.reply_text(text="Ok")
 
 
 def error_handler(bot, update, error):

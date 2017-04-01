@@ -8,6 +8,7 @@ class ToodledoUser:
         self.session = ToodledoSession(user.get_token(),
                                        user.upd_token)
         self.tasks = ToodledoApi(self.session, 'tasks')
+        self.account = ToodledoApi(self.session, 'account')
 
     def authorize(self, redirect_url):
         self.session.authorize(redirect_url)

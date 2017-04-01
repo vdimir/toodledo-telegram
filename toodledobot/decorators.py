@@ -1,5 +1,6 @@
 from toodledocore import NotAuthorizingError
-
+from .errors import UserInputError
+from telegram import ParseMode
 
 def not_authorized_wrapper(func):
     def wrap(bot, update, *args, **kwargs):
@@ -8,8 +9,18 @@ def not_authorized_wrapper(func):
         except NotAuthorizingError:
             bot.sendMessage(chat_id=extract_user_id(update),
                             text="Not authorized\nAuthorize by /auth "
-                                 "and follow the instructions",
-                            disable_web_page_preview=True)
+                                 "and follow the instructions")
+    return wrap
+
+
+def user_error_wrapper(func):
+    def wrap(bot, update, *args, **kwargs):
+        try:
+            return func(bot, update, *args, **kwargs)
+        except UserInputError as err:
+            bot.sendMessage(chat_id=extract_user_id(update),
+                            text="<i>{}</i>".format(err),
+                            parse_mode=ParseMode.HTML)
     return wrap
 
 

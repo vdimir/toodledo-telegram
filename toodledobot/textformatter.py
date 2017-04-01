@@ -1,28 +1,52 @@
 from toodledoclient.datatypes import Task
+from itertools import count, repeat
 
-from utils import unlines
+
+def unlines(arr, elem_str=str):
+    return str.join('\n', map(elem_str, arr))
 
 
 class HtmlTextFormater:
     def __init__(self):
-        pass
+        self.comp_sign = '\U00002714'
+        self.uncomp_sign = '\U000025FD'
+        self.star_sign = '\U00002B50'
+        self._settings = {}
 
-    def task_list_fmt(self, tasks: [Task]):
-        return "{}".format(unlines(map(
-            lambda p: self.task_fmt(p[1], p[0]),
-            enumerate(tasks, 1))))
+    def set(self, **kwargs):
+        for k, v in kwargs:
+            self._settings[k] = v
+        return self
+
+    def is_set(self, val):
+        return self._settings.get(val, False)
 
     @staticmethod
     def tag_map(tag):
         tmap = {'edu': '\U0001F4D2'}
-        tmap = {}
+        # tmap = {}
         return tmap.get(tag, '#' + tag)
 
-    def task_fmt(self, task: Task, num=None):
-        x = '\U00002714' if task.completed else '\U000025FD'
-        x = '\U00002B50' if task.star else x
-        due = '' if task.duedate is None else task.duedate.strftime("<i>%d %b, %A</i>")
-        tags = str.join(' ', map(self.tag_map, task.tags))
-        num = num or ''
-        res = str.format("{x} {num} {title} {tags} {due}", x=x, title=task.title, due=due, tags=tags, num=num)
-        return res
+    def due_format(self, duedate):
+        if duedate is None:
+            return ''
+        return duedate.strftime("<i>%d %b, %A</i>")
+
+    def tags_format(self, tags):
+        return ','.join(map(self.tag_map, tags))
+
+    def note_format(self, note):
+        if self.is_set('note'):
+            return '\n' + note
+        return ''
+
+    def task_fmt(self, task=None, num=None):
+        text = str.format("{num}{star}{comp}{title} {tags} {due}{note}",
+                          num=num or '',
+                          title=task.title,
+                          due=self.due_format(task.duedate),
+                          tags=self.tags_format(task.tags),
+                          note=self.note_format(task.note),
+                          star=task.star and self.star_sign or '',
+                          comp=task.completed() and self.comp_sign or '')
+        return text

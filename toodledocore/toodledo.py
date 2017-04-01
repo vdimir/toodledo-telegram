@@ -58,7 +58,8 @@ class ApiUrl:
     api_url = "https://api.toodledo.com/3/{}/{}.php"
     method = {'get': 'GET',
               'add': 'POST',
-              'edit': 'POST'
+              'edit': 'POST',
+              'deleted': 'GET'
               }
 
     def __init__(self, path):
@@ -80,7 +81,7 @@ class ToodledoRequest:
 
 
 class ToodledoApi:
-    __attrs__ = ['get', 'add', 'edit']
+    __attrs__ = ['get', 'add', 'edit', 'deleted']
 
     def __init__(self, session: ToodledoSession, path: str):
         self.session = session
