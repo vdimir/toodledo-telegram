@@ -11,7 +11,7 @@ class HtmlTextFormater:
         self.comp_sign = '\U00002611'
         self.uncomp_sign = '\U000025FD'
         self.star_sign = '\U00002B50'
-        self._settings = {}
+        self._settings = {'note': True}
 
     def set(self, **kwargs):
         for k, v in kwargs:
@@ -34,12 +34,15 @@ class HtmlTextFormater:
             return duedate.strftime("<i>%d %b %Y</i>")
         return duedate.strftime("<i>%d %b, %A</i>")
 
+    def addnl(self, val):
+        return val and '\n'+val
+
     def tags_format(self, tags):
-        return ','.join(map(self.tag_map, tags))
+        return ', '.join(map(self.tag_map, tags))
 
     def note_format(self, note):
         if self.is_set('note'):
-            return '\n' + note
+            return note
         return ''
 
     def prior_format(self, prior):
@@ -47,13 +50,13 @@ class HtmlTextFormater:
         return bages[prior+1]
 
     def task_fmt(self, task=None, num=None):
-        text = str.format("{num}{star}{comp}{title} {tags} {due} {prior}{note}",
+        text = str.format("{num}{star}{comp}<b>{title}</b>{prior}{due}{note}{tags}",
                           num=num or '',
                           title=task.title,
-                          due=self.due_format(task.duedate),
-                          tags=self.tags_format(task.tags),
-                          note=self.note_format(task.note),
                           star=task.star and self.star_sign or '',
                           comp=task.completed() and self.comp_sign or '',
-                          prior=self.prior_format(task.priority))
+                          prior=self.prior_format(task.priority),
+                          due=self.addnl(self.due_format(task.duedate)),
+                          tags=self.addnl(self.tags_format(task.tags)),
+                          note=self.addnl(self.note_format(task.note)))
         return text

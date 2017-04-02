@@ -4,7 +4,7 @@ from toodledoclient import toodledo_client
 from .textformatter import HtmlTextFormater
 from .decorators import *
 from .actions import send_task_list, send_task
-from .msg_parser import parse_add_task, parse_edit_task
+from .msg_parser import parse_add_task, parse_edit_task, parse_prior_search
 
 import calendar
 import re
@@ -59,9 +59,7 @@ def get_tasks_handler(bot, update, uid=None):
 def get_tasks_by_tag_handler(bot, update, uid=None, groups=None):
     tasks = toodledo_client(uid).get_tasks(tag=groups[0])
     if len(tasks) == 0:
-        bot.sendMessage(chat_id=uid, text="<i>No such tasks</i>",
-                        parse_mode=telegram.ParseMode.HTML)
-        return
+        raise UserInputError("No such tasks")
     send_task_list(bot, uid, tasks)
 
 
@@ -90,6 +88,21 @@ def task_edit_handler(bot: telegram.Bot, update, uid=None):
     update.message.reply_to_message.edit_text(text=fmt.task_fmt(task),
                                               parse_mode=telegram.ParseMode.HTML)
     update.message.reply_text(text="<i>Edited!</i>", parse_mode=telegram.ParseMode.HTML)
+
+
+@user_error_wrapper
+@not_authorized_wrapper
+@add_user_id
+def other_handler(bot: telegram.Bot, update, uid=None):
+    msg_text = update.message.text
+    priority = parse_prior_search(msg_text)
+    if priority is None:
+        raise UserInputError("Unknown command: {}".format(msg_text))
+
+    tasks = toodledo_client(uid).get_tasks(prior=priority)
+    if len(tasks) == 0:
+        raise UserInputError("No such tasks")
+    send_task_list(bot, uid, tasks)
 
 
 def error_handler(bot, update, error):

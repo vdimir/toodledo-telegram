@@ -91,7 +91,7 @@ class ToodledoClient:
     def get_task_by_id(self, task_id):
         return self.tasks.by_id(task_id, False)
 
-    def get_tasks(self, task_id=None, tag=None, comp=False) -> [Task]:
+    def get_tasks(self, task_id=None, tag=None, comp=False, prior=None) -> [Task]:
         if task_id is not None:
             return maybe_list(self.get_task_by_id(task_id))
 
@@ -100,6 +100,8 @@ class ToodledoClient:
             filters.append(lambda t: tag in t.tags)
         if comp is not None:
             filters.append(lambda t: t.completed() == comp)
+        if prior is not None:
+            filters.append(lambda t: t.priority == prior)
 
         tasks = self.tasks.get_tasks().values()
         filtered = filter(andf(*filters), tasks)

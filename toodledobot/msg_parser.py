@@ -18,13 +18,21 @@ def parse_date(due):
 due_parser = (Suppress('$') + Word(alphanums + ' ')
               .setParseAction(lambda t: ('duedate', parse_date(t.asList()[0])))).setName('@due')
 
+tags = (ZeroOrMore(Suppress('#') + Word(alphas))
+        .setParseAction(lambda t: ('tags', t.asList())))
+
+pn = Literal('?').setParseAction(lambda _: ('priority', -1))
+p0 = Literal('0').setParseAction(lambda _: ('priority', 0))
+p1 = Literal('!').setParseAction(lambda _: ('priority', 1))
+p2 = Literal('!!').setParseAction(lambda _: ('priority', 2))
+p3 = Literal('!!!').setParseAction(lambda _: ('priority', 3))
+prior_parser = (p3 | p2 | p1 | p0 | pn).setName('priority')
+
 
 def parse_add_task(text):
     cmd = Suppress(Optional(prs.Word('/', prs.alphas)))
     title = (Word(alphanums + ' ,!')
              .setParseAction(lambda t: ('title', t.asList()[0].strip()))).setName('title')
-    tags = (ZeroOrMore(Suppress('#') + Word(alphas))
-            .setParseAction(lambda t: ('tags', t.asList())))
 
     task_parser = cmd + title + tags + Optional(due_parser)
     try:
@@ -42,14 +50,7 @@ def parse_edit_task(task, text):
     comp = (Literal('/comp') | Literal('comp')).setParseAction(lambda _: ('comp', True)).setName('/comp')
     star = (Literal('/star') | Literal('star')).setParseAction(lambda _: ('star', True)).setName('/star')
 
-    pn = Literal('?').setParseAction(lambda _: ('priority', -1))
-    p0 = Literal('0').setParseAction(lambda _: ('priority', 0))
-    p1 = Literal('!').setParseAction(lambda _: ('priority', 1))
-    p2 = Literal('!!').setParseAction(lambda _: ('priority', 2))
-    p3 = Literal('!!!').setParseAction(lambda _: ('priority', 3))
-    prior = (p3 | p2 | p1 | p0 | pn).setName('priority')
-
-    task_parser = comp | star | due_parser | prior
+    task_parser = comp | star | due_parser | prior_parser | tags
     try:
         edit_task = dict(task_parser.parseString(text).asList())
     except ParseException as e:
@@ -60,9 +61,18 @@ def parse_edit_task(task, text):
     elif edit_task.get('star') is not None:
         s = not task.is_star()
         edited_task = task.using(star=s)
-    elif edit_task.get('duedate') is not None:
-        edited_task = task.using(duedate=edit_task.get('duedate'))
-    elif edit_task.get('priority') is not None:
-        edited_task = task.using(priority=edit_task.get('priority'))
+    elif edit_task.get('tags') is not None:
+        edit_task['tags'] += task.tags
+        edited_task = task.using(**edit_task)
+    else:
+        edited_task = task.using(**edit_task)
 
     return edited_task
+
+
+def parse_prior_search(text):
+    try:
+        prior = dict(prior_parser.parseString(text).asList())
+    except ParseException as e:
+        prior = None
+    return prior['priority']
