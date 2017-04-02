@@ -6,6 +6,7 @@ from pysistence import make_dict
 
 from utils import maybe_list, andf
 import time
+from utils import attrgetter, Inf
 
 import logging
 logger = logging.getLogger(__name__)
@@ -90,7 +91,7 @@ class ToodledoClient:
     def get_task_by_id(self, task_id):
         return self.tasks.by_id(task_id, False)
 
-    def get_tasks(self, task_id=None, tag=None, comp=False) -> [Task]:
+    def get_tasks(self, task_id=None, tag=None, comp=False, prior=None) -> [Task]:
         if task_id is not None:
             return maybe_list(self.get_task_by_id(task_id))
 
@@ -99,9 +100,12 @@ class ToodledoClient:
             filters.append(lambda t: tag in t.tags)
         if comp is not None:
             filters.append(lambda t: t.completed() == comp)
+        if prior is not None:
+            filters.append(lambda t: t.priority == prior)
 
         tasks = self.tasks.get_tasks().values()
-        return list(filter(andf(*filters), tasks))
+        filtered = filter(andf(*filters), tasks)
+        return list(sorted(filtered, reverse=True, key=attrgetter('duedate', Inf())))
 
     def edit_add_task(self, new_task):
         new_dump = [task_schema.dumps(new_task).data]
@@ -110,5 +114,5 @@ class ToodledoClient:
         else:
             [resp] = self.user.tasks.add(params.using(tasks=new_dump))
         resp_task = task_schema.load(resp).data
-        self.tasks.sync()
+        self.tasks.update_task(resp_task)
         return resp_task

@@ -52,6 +52,7 @@ class TaskSchema(Schema):
     ref = fields.Integer()
     modified = fields.Integer(load_only=True)
     star = fields.Boolean()
+    priority = fields.Integer()
     note = fields.String(validate=Length(max=32000))
 
     @post_load
