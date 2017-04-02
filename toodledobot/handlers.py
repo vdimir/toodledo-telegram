@@ -85,19 +85,11 @@ def task_edit_handler(bot: telegram.Bot, update, uid=None):
     if task is None:
         raise UserInputError("Not found")
 
-    edit_task = parse_edit_task(msg_text)
-    if edit_task.get('comp'):
-        edited_task = task.toggle_complete()
-    elif edit_task.get('star'):
-        s = not task.is_star()
-        edited_task = task.using(star=s)
-    elif edit_task.get('duedate'):
-        edited_task = task.using(duedate=edit_task.get('duedate'))
-
-    task = toodledo_client(uid).edit_add_task(edited_task)
+    edit_task = parse_edit_task(task, msg_text)
+    task = toodledo_client(uid).edit_add_task(edit_task)
     update.message.reply_to_message.edit_text(text=fmt.task_fmt(task),
                                               parse_mode=telegram.ParseMode.HTML)
-    update.message.reply_text(text="Ok")
+    update.message.reply_text(text="<i>Edited!</i>", parse_mode=telegram.ParseMode.HTML)
 
 
 def error_handler(bot, update, error):

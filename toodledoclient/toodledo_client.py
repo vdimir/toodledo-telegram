@@ -110,5 +110,5 @@ class ToodledoClient:
         else:
             [resp] = self.user.tasks.add(params.using(tasks=new_dump))
         resp_task = task_schema.load(resp).data
-        self.tasks.sync()
+        self.tasks.update_task(resp_task)
         return resp_task
