@@ -1,6 +1,6 @@
 from toodledoclient.datatypes import Task
 from itertools import count, repeat
-
+from datetime import date
 
 def unlines(arr, elem_str=str):
     return str.join('\n', map(elem_str, arr))
@@ -30,6 +30,8 @@ class HtmlTextFormater:
     def due_format(self, duedate):
         if duedate is None:
             return ''
+        if duedate.year != date.today().year:
+            return duedate.strftime("<i>%d %b %Y</i>")
         return duedate.strftime("<i>%d %b, %A</i>")
 
     def tags_format(self, tags):

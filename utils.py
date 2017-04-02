@@ -14,5 +14,24 @@ def maybe_list(val=None):
     return [val]
 
 
+def attrgetter(name, default=None):
+    def wrap(obj):
+        return getattr(obj, name, default) or default
+    return wrap
+
+
 def andf(*fs):
     return lambda arg: all(map(lambda f: f(arg), fs))
+
+
+class Inf:
+    def __init__(self, great=True):
+        self.great = great
+
+    def __lt__(self, other):
+        neq = not isinstance(other, self.__class__)
+        return neq and not self.great
+
+    def __gt__(self, other):
+        neq = not isinstance(other, self.__class__)
+        return neq and self.great

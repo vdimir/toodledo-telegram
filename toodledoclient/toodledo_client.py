@@ -6,6 +6,7 @@ from pysistence import make_dict
 
 from utils import maybe_list, andf
 import time
+from utils import attrgetter, Inf
 
 import logging
 logger = logging.getLogger(__name__)
@@ -101,7 +102,8 @@ class ToodledoClient:
             filters.append(lambda t: t.completed() == comp)
 
         tasks = self.tasks.get_tasks().values()
-        return list(filter(andf(*filters), tasks))
+        filtered = filter(andf(*filters), tasks)
+        return list(sorted(filtered, reverse=True, key=attrgetter('duedate', Inf())))
 
     def edit_add_task(self, new_task):
         new_dump = [task_schema.dumps(new_task).data]
