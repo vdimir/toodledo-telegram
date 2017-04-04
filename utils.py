@@ -16,7 +16,16 @@ def maybe_list(val=None):
 
 def attrgetter(name, default=None):
     def wrap(obj):
-        return getattr(obj, name, default) or default
+        res = getattr(obj, name, default)
+        if res is None:
+            return default
+        return res
+    return wrap
+
+
+def tuple_func(*fs):
+    def wrap(arg):
+        return tuple(map(lambda f: f(arg), fs))
     return wrap
 
 

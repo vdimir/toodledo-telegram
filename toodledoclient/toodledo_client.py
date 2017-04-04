@@ -3,8 +3,9 @@ from .datatypes import Task
 from toodledocore.schemas import TaskSchema
 import datetime
 from pysistence import make_dict
+from functional import compose
 
-from utils import maybe_list, andf
+from utils import maybe_list, andf, tuple_func
 import time
 from utils import attrgetter, Inf
 
@@ -101,11 +102,16 @@ class ToodledoClient:
         if comp is not None:
             filters.append(lambda t: t.completed() == comp)
         if prior is not None:
-            filters.append(lambda t: t.priority == prior)
+            if prior > 0:
+                filters.append(lambda t: t.priority >= prior)
+            else:
+                filters.append(lambda t: t.priority == prior)
 
         tasks = self.tasks.get_tasks().values()
         filtered = filter(andf(*filters), tasks)
-        return list(sorted(filtered, reverse=True, key=attrgetter('duedate', Inf())))
+        duegetter = attrgetter('duedate', Inf())
+        proirgetter = compose(lambda x: -x, attrgetter('priority'))
+        return list(sorted(filtered, reverse=True, key=tuple_func(duegetter, proirgetter)))
 
     def edit_add_task(self, new_task):
         new_dump = [task_schema.dumps(new_task).data]
