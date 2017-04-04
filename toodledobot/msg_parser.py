@@ -3,7 +3,7 @@ from .errors import UserInputError
 
 import dateparser
 
-from pyparsing import Word, ZeroOrMore, Optional, Suppress, ParseException, Literal
+from pyparsing import Word, OneOrMore, Optional, Suppress, ParseException, Literal
 import pyparsing as prs
 
 rus_alphas = 'йцукенгшщзхъфывапролджэячсмитьбюЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ'
@@ -16,10 +16,12 @@ def parse_date(due):
 
 
 due_parser = (Suppress('$') + Word(alphanums + ' ')
-              .setParseAction(lambda t: ('duedate', parse_date(t.asList()[0])))).setName('@due')
+              .setParseAction(lambda t: ('duedate', parse_date(t.asList()[0])))).setName('$due')
 
-tags = (ZeroOrMore(Suppress('#') + Word(alphas))
-        .setParseAction(lambda t: ('tags', t.asList())))
+tag_pars = (Suppress('#') + Word(alphas))
+
+tags = (OneOrMore(tag_pars)
+        .setParseAction(lambda t: ('tags', t.asList()))).setName('tags')
 
 pn = Literal('?').setParseAction(lambda _: ('priority', -1))
 p0 = Literal('0').setParseAction(lambda _: ('priority', 0))
@@ -34,7 +36,7 @@ def parse_add_task(text):
     title = (Word(alphanums + ' ,!')
              .setParseAction(lambda t: ('title', t.asList()[0].strip()))).setName('title')
 
-    task_parser = cmd + title + tags + Optional(due_parser)
+    task_parser = cmd + title + Optional(tags) + Optional(due_parser)
     try:
         raw_task = dict(task_parser.parseString(text).asList())
     except ParseException as e:
@@ -74,5 +76,5 @@ def parse_prior_search(text):
     try:
         prior = dict(prior_parser.parseString(text).asList())
     except ParseException as e:
-        prior = None
+        prior = {'priority': None}
     return prior['priority']
