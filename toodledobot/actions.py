@@ -3,7 +3,13 @@ import telegram
 from toodledoclient import toodledo_client
 
 from .textformatter import HtmlTextFormater
+
 fmt = HtmlTextFormater()
+
+
+def send_text(bot, uid, txt):
+    bot.sendMessage(chat_id=uid, text=txt,
+                    parse_mode=telegram.ParseMode.HTML)
 
 
 def send_task(bot, uid, task):

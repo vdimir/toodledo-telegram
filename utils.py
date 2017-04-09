@@ -37,10 +37,23 @@ class Inf:
     def __init__(self, great=True):
         self.great = great
 
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return other.great == self.great
+        return False
+
     def __lt__(self, other):
-        neq = not isinstance(other, self.__class__)
-        return neq and not self.great
+        return not self.great
 
     def __gt__(self, other):
-        neq = not isinstance(other, self.__class__)
-        return neq and self.great
+        return self.great
+
+    def __le__(self, other):
+        if self == other:
+            return True
+        return not self.great
+
+    def __ge__(self, other):
+        if self == other:
+            return True
+        return self.great

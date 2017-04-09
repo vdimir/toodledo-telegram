@@ -33,8 +33,7 @@ class HtmlTextFormater:
             return duedate.strftime("<i>%d %b %Y</i>")
         return duedate.strftime("<i>%d %b, %A</i>")
 
-    def time_delta_format(self, duedate):
-        dt = (duedate - date.today()).days
+    def time_delta_format(self, dt):
         if dt < 0:
             return "{} days overdue!".format(dt)
         if dt > 7:
@@ -67,7 +66,7 @@ class HtmlTextFormater:
                 prior=self.prior_format(task.priority)),
             task.duedate and "{due} | {left}".format(
                 due=self.due_format(task.duedate),
-                left=self.time_delta_format(task.duedate)),
+                left=self.time_delta_format(task.days_left())),
             "{note}".format(note=self.note_format(task.note)),
             "{tags}".format(tags=self.tags_format(task.tags))
         ]

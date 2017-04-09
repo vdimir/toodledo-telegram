@@ -31,7 +31,7 @@ pyparsing==2.1.10
 pyperclip==1.5.27
 pysistence==0.4.1
 python-dateutil==2.6.0
-python-telegram-bot==5.3.0
+git+git://github.com/python-telegram-bot/python-telegram-bot@44d7bad
 pytz==2016.10
 PyYAML==3.12
 regex==2017.2.8

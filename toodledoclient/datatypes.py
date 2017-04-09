@@ -41,3 +41,8 @@ class Task(persistent('id_')):
 
     def is_star(self):
         return self.star
+
+    def days_left(self):
+        if self.duedate is None:
+            return None
+        return (self.duedate - date.today()).days

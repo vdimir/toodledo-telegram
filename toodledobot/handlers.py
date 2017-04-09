@@ -3,13 +3,16 @@ import telegram
 from toodledoclient import toodledo_client
 from .textformatter import HtmlTextFormater
 from .decorators import *
-from .actions import send_task_list, send_task
+from .actions import send_task_list, send_task, send_text
 from .msg_parser import parse_add_task, parse_edit_task, parse_prior_search
 
 import calendar
 import re
 import datetime
 import logging
+
+from database import NotifiedUsers
+notified_users = NotifiedUsers()
 
 logger = logging.getLogger(__name__)
 
@@ -103,6 +106,19 @@ def other_handler(bot: telegram.Bot, update, uid=None):
     if len(tasks) == 0:
         raise UserInputError("No such tasks")
     send_task_list(bot, uid, tasks)
+
+
+def tasks_mailing_job(bot, job):
+    logger.info("Execute schedule task")
+
+    for uid in notified_users.get_notified():
+        tasks = toodledo_client(uid).get_tasks(days_left=3)
+        if len(tasks) == 0:
+            send_text(bot, uid, "<i>Your daily is empty</i>")
+            continue
+        send_text(bot, uid, "<i>Your daily:</i>")
+        send_task_list(bot, uid, tasks)
+        logger.info("send tasks for %d" % uid)
 
 
 def error_handler(bot, update, error):
