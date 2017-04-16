@@ -28,8 +28,12 @@ def start_handler(bot, update, uid=None):
 @add_user_id
 def get_kbd_handler(bot, update, uid=None):
     kbd = telegram.ReplyKeyboardMarkup([['!', '!!']], resize_keyboard=True)
-    bot.sendMessage(chat_id=uid, text="keyboard", reply_markup=kbd)
+    bot.sendMessage(chat_id=uid, text="<i>keyboard</i>", reply_markup=kbd, parse_mode=telegram.ParseMode.HTML)
 
+@add_user_id
+def notify_subs_handler(bot, update, uid=None):
+    notified_users.add_user(uid)
+    bot.sendMessage(chat_id=uid, text="<i>Ok</i>", parse_mode=telegram.ParseMode.HTML)
 
 @add_user_id
 def calendar_handler(bot, update, uid=None):
