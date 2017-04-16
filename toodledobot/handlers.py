@@ -26,6 +26,12 @@ def start_handler(bot, update, uid=None):
 
 
 @add_user_id
+def get_kbd_handler(bot, update, uid=None):
+    kbd = telegram.ReplyKeyboardMarkup([['!', '!!']], resize_keyboard=True)
+    bot.sendMessage(chat_id=uid, text="keyboard", reply_markup=kbd)
+
+
+@add_user_id
 def calendar_handler(bot, update, uid=None):
     today = datetime.date.today()
     (year, month, day) = today.year, today.month, today.day
