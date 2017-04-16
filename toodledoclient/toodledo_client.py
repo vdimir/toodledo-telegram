@@ -72,7 +72,7 @@ class ToodledoClient:
     def __init__(self, uid):
         self.user = ToodledoUser(uid)
         self.tasks = TaskCache(self.user)
-        self.tasks.sync()
+        # self.tasks.sync()
         self.msg_task_map = {}
 
     @property

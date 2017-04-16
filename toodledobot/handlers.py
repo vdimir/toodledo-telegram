@@ -45,7 +45,6 @@ def calendar_handler(bot, update, uid=None):
                     parse_mode=telegram.ParseMode.HTML)
 
 
-@not_authorized_wrapper
 @add_user_id
 def auth_handler(bot, update, args, uid=None):
     if len(args) == 0:

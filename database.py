@@ -10,7 +10,7 @@ db = TinyDB('db.json')
 
 class UserDbEntry:
     def __init__(self, user_id):
-        self.db = db
+        self.db = db.table('auth_data')
         self.user_id = user_id
         logger.info('Init user %d' % self.user_id)
 
