@@ -7,7 +7,7 @@ from functional import compose
 
 from utils import maybe_list, andf, tuple_func
 import time
-from utils import attrgetter, Inf
+from utils import attrgetter, Inf, Maybe
 
 import logging
 logger = logging.getLogger(__name__)
@@ -107,7 +107,7 @@ class ToodledoClient:
             else:
                 filters.append(lambda t: t.priority == prior)
         if days_left is not None:
-            filters.append(lambda t: (t.days_left() or Inf()) <= days_left)
+            filters.append(lambda t: Maybe(t.days_left()).or_else(Inf()).val <= days_left)
 
         tasks = self.tasks.get_tasks().values()
         filtered = filter(andf(*filters), tasks)

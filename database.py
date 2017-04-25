@@ -27,7 +27,7 @@ class UserDbEntry:
         logger.info('Update user %d' % self.user_id)
 
     def create(self, token):
-        db.insert({'user_id': self.user_id, 'token': token})
+        self.db.insert({'user_id': self.user_id, 'token': token})
         logger.info('Create user %d' % self.user_id)
 
 

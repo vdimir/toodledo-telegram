@@ -32,6 +32,22 @@ def tuple_func(*fs):
 def andf(*fs):
     return lambda arg: all(map(lambda f: f(arg), fs))
 
+class Maybe:
+    def __init__(self, val):
+        self.val = val
+
+    @staticmethod
+    def _to_maybe(val):
+        if isinstance(val, Maybe):
+            return val
+        else:
+            return Maybe(val)
+
+    def or_else(self, val):
+        if self.val is None:
+            return Maybe._to_maybe(val)
+        return self
+
 
 class Inf:
     def __init__(self, great=True):
