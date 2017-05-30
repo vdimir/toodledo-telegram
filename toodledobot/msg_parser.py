@@ -33,10 +33,10 @@ prior_parser = (p3 | p2 | p1 | p0 | pn).setName('priority')
 
 def parse_add_task(text):
     cmd = Suppress(Optional(prs.Word('/', prs.alphas)))
-    title = (Word(alphanums + ' ,!')
+    title = (Word(alphanums + ' ,')
              .setParseAction(lambda t: ('title', t.asList()[0].strip()))).setName('title')
 
-    task_parser = cmd + title + Optional(tags) + Optional(due_parser)
+    task_parser = cmd + title + Optional(prior_parser) + Optional(tags) + Optional(due_parser)
     try:
         raw_task = dict(task_parser.parseString(text).asList())
     except ParseException as e:
@@ -51,10 +51,10 @@ def parse_add_task(text):
 def parse_edit_task(task, text):
     comp = (Literal('/comp') | Literal('comp')).setParseAction(lambda _: ('comp', True)).setName('/comp')
     star = (Literal('/star') | Literal('star')).setParseAction(lambda _: ('star', True)).setName('/star')
-
-    task_parser = comp | star | due_parser | prior_parser | tags
+    due_none_parser = Literal('$$').setParseAction(lambda t: ('duedate', None))
+    task_parser = comp | star | (due_parser | due_none_parser) | prior_parser | tags
     try:
-        edit_task = dict(task_parser.parseString(text).asList())
+        edit_task = dict(task_parser.parseString(text.lower()).asList())
     except ParseException as e:
         raise UserInputError(str(e))
 

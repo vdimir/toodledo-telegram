@@ -10,7 +10,7 @@ db = TinyDB('db.json')
 
 class UserDbEntry:
     def __init__(self, user_id):
-        self.db = db
+        self.db = db.table('auth_data')
         self.user_id = user_id
         logger.info('Init user %d' % self.user_id)
 
@@ -27,7 +27,7 @@ class UserDbEntry:
         logger.info('Update user %d' % self.user_id)
 
     def create(self, token):
-        db.insert({'user_id': self.user_id, 'token': token})
+        self.db.insert({'user_id': self.user_id, 'token': token})
         logger.info('Create user %d' % self.user_id)
 
 
