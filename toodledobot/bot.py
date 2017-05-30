@@ -22,7 +22,7 @@ class ToodledoBot:
         dispatcher.add_handler(CommandHandler('auth', auth_handler, pass_args=True))
         dispatcher.add_handler(CommandHandler('list', get_tasks_handler))
         dispatcher.add_handler(CommandHandler('add', add_task_handler))
-        dispatcher.add_handler(CommandHandler('keys', get_kbd_handler))
+        dispatcher.add_handler(CommandHandler('keys', get_kbd_handler, pass_args=True))
         dispatcher.add_handler(CommandHandler('notify', notify_subs_handler))
         dispatcher.add_handler(RegexHandler('#(\w+)', get_tasks_by_tag_handler, pass_groups=True))
         dispatcher.add_handler(MessageHandler(Filters.text | Filters.command, other_handler))

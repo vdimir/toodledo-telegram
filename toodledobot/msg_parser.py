@@ -49,7 +49,8 @@ def parse_add_task(text):
 
 
 def parse_edit_task(task, text):
-    comp = (Literal('/comp') | Literal('comp')).setParseAction(lambda _: ('comp', True)).setName('/comp')
+    comp = (Literal('/comp') | Literal('comp')
+            | Literal('done') | Literal('X') | Literal('x')).setParseAction(lambda _: ('comp', True)).setName('/comp')
     star = (Literal('/star') | Literal('star')).setParseAction(lambda _: ('star', True)).setName('/star')
     due_none_parser = Literal('$$').setParseAction(lambda t: ('duedate', None))
     task_parser = comp | star | (due_parser | due_none_parser) | prior_parser | tags

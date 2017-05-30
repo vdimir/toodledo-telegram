@@ -26,7 +26,12 @@ def start_handler(bot, update, uid=None):
 
 
 @add_user_id
-def get_kbd_handler(bot, update, uid=None):
+def get_kbd_handler(bot, update, args, uid=None):
+    if len(args) > 0:
+        if args[0] == 'remove':
+            bot.sendMessage(chat_id=uid, text="<i>keyboard</i>", reply_markup=telegram.ReplyKeyboardRemove(),
+                            parse_mode=telegram.ParseMode.HTML)
+            return
     kbd = telegram.ReplyKeyboardMarkup([['!', '!!']], resize_keyboard=True)
     bot.sendMessage(chat_id=uid, text="<i>keyboard</i>", reply_markup=kbd, parse_mode=telegram.ParseMode.HTML)
 
