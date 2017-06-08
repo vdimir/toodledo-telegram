@@ -11,6 +11,8 @@ import re
 import datetime
 import logging
 
+from utils import Inf, Maybe
+
 from database import NotifiedUsers
 notified_users = NotifiedUsers()
 
@@ -37,8 +39,14 @@ def get_kbd_handler(bot, update, args, uid=None):
 
 @add_user_id
 def notify_subs_handler(bot, update, uid=None):
-    notified_users.add_user(uid)
-    bot.sendMessage(chat_id=uid, text="<i>Ok</i>", parse_mode=telegram.ParseMode.HTML)
+    notify_on = uid in notified_users.get_notified()
+    if notify_on:
+        notified_users.remove_user(uid)
+        msg = "notification OFF"
+    else:
+        notified_users.add_user(uid)
+        msg = "notification ON"
+    bot.sendMessage(chat_id=uid, text="<i>%s</i>" % msg, parse_mode=telegram.ParseMode.HTML)
 
 @add_user_id
 def calendar_handler(bot, update, uid=None):
@@ -126,7 +134,9 @@ def tasks_mailing_job(bot, job):
     logger.info("Execute schedule task")
 
     for uid in notified_users.get_notified():
-        tasks = toodledo_client(uid).get_tasks(days_left=3)
+        days_left = 3
+        filt = lambda t: t.is_star() or Maybe(t.days_left()).or_else(Inf()).val <= days_left
+        tasks = toodledo_client(uid).get_tasks_filter([filt, lambda t: not t.completed()])
         if len(tasks) == 0:
             send_text(bot, uid, "<i>Your daily is empty</i>")
             continue

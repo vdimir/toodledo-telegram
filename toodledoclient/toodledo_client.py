@@ -109,6 +109,9 @@ class ToodledoClient:
         if days_left is not None:
             filters.append(lambda t: Maybe(t.days_left()).or_else(Inf()).val <= days_left)
 
+        return self.get_tasks_filter(filters)
+
+    def get_tasks_filter(self, filters):
         tasks = self.tasks.get_tasks().values()
         filtered = filter(andf(*filters), tasks)
         duegetter = attrgetter('duedate', Inf())
