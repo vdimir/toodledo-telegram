@@ -138,7 +138,7 @@ def tasks_mailing_job(bot, job):
         filt = lambda t: t.is_star() or Maybe(t.days_left()).or_else(Inf()).val <= days_left
         tasks = toodledo_client(uid).get_tasks_filter([filt, lambda t: not t.completed()])
         if len(tasks) == 0:
-            send_text(bot, uid, "<i>Your daily is empty</i>")
+            #  send_text(bot, uid, "<i>Your daily is empty</i>")
             continue
         send_text(bot, uid, "<i>Your daily:</i>")
         send_task_list(bot, uid, tasks)
