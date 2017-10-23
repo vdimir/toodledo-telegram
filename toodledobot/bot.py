@@ -29,4 +29,4 @@ class ToodledoBot:
         dispatcher.add_error_handler(error_handler)
 
     def setup_schedule(self):
-        self.jobqueue.run_daily(tasks_mailing_job, datetime.time(9, 30))
+        self.jobqueue.run_daily(tasks_mailing_job, datetime.time(5, 00))
