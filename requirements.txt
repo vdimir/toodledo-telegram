@@ -33,7 +33,7 @@ pysistence==0.4.1
 python-dateutil==2.6.0
 git+git://github.com/python-telegram-bot/python-telegram-bot@44d7bad
 pytz==2016.10
-PyYAML==3.12
+PyYAML==5.4
 regex==2017.2.8
 requests==2.9.1
 requests-oauthlib==0.8.0
